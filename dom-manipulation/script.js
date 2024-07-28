@@ -5,12 +5,11 @@ let quotes = JSON.parse(localStorage.getItem('quotes')) || [
     { text: "Life is 10% what happens to us and 90% how we react to it.", category: "Motivation" }
 ]
 
-function showRandomnQuotes() {
+function showRandomQuote() {
     const randomIndex = Math.floor(Math.random() * quotes.length);
     const randomQuote = quotes[randomIndex];
     quoteDisplay.textContent = randomQuote.text;
 }
-
 
 function createAddQuoteForm() {
     const quoteForm = document.createElement("div");
@@ -21,8 +20,6 @@ function createAddQuoteForm() {
     `
     document.body.appendChild(quoteForm);
 }
-
-
 
 function addQuote() {
     const quote = document.getElementById("newQuoteText").value.trim();
@@ -40,9 +37,7 @@ function addQuote() {
     }
 }
 
-
 function saveQuotes() {
-    localStorage.setItem("quotes", JSON.stringify(quotes))
     localStorage.setItem("quotes", JSON.stringify(quotes));
     syncWithServer();
 }
@@ -67,7 +62,6 @@ function importFromJsonFile(event) {
     };
     fileReader.readAsText(event.target.files[0]);
 }
-
 async function syncWithServer() {
     try {
         const response = await fetch('https://jsonplaceholder.typicode.com/posts');
@@ -93,16 +87,19 @@ function showNotification(message) {
         notification.remove();
     }, 3000);
 }
-
-showQuoteButton.addEventListener("click", showRandomnQuotes);
+showQuoteButton.addEventListener("click", showRandomQuote);
 createAddQuoteForm();
 
-@ @ - 83, 4 + 107, 7 @ @ importInput.type = 'file';
+const exportButton = document.createElement('button');
+exportButton.textContent = 'Export Quotes';
+const exportButton = document.getElementById("exportQuotes");
+exportButton.onclick = exportToJsonFile;
+document.body.appendChild(exportButton);
+
+const importInput = document.createElement('input');
+importInput.type = 'file';
 importInput.id = 'importFile';
 importInput.accept = '.json';
 importInput.onchange = importFromJsonFile;
 document.body.appendChild(importInput);
-document.body.appendChild(importInput);
-
-
 startPeriodicSync();
