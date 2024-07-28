@@ -5,6 +5,35 @@ let quotes = JSON.parse(localStorage.getItem('quotes')) || [
     { text: "Life is 10% what happens to us and 90% how we react to it.", category: "Motivation" }
 ]
 
+function populateCategories() {
+    const categories = [...new Set(quotes.map(quote => quote.category))];
+    const categoryFilter = document.getElementById('categoryFilter');
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.innerText = category;
+        categoryFilter.appendChild(option);
+    });
+
+    const lastSelectedFilter = localStorage.getItem('selectedCategory') || 'all';
+    categoryFilter.value = lastSelectedFilter;
+    filterQuotes();
+}
+
+function filterQuotes() {
+    const selectedCategory = document.getElementById('categoryFilter').value;
+    localStorage.setItem('lastSelectedCategory', selectedCategory);
+    const filteredQuotes = selectedCategory === 'all' ? quotes : quotes.filter(quote => quote.category === selectedCategory);
+    const quoteDisplay = document.getElementById('quoteDisplay');
+    if (filteredQuotes.length > 0) {
+        const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
+        const quote = filteredQuotes[randomIndex];
+        quoteDisplay.innerHTML = `<p>${quote.text}</p><p><em>${quote.category}</em></p>`;
+    } else {
+        quoteDisplay.innerHTML = '<p>No quotes available for this category.</p>';
+    }
+}
+
 function showRandomQuote() {
     const randomIndex = Math.floor(Math.random() * quotes.length);
     const randomQuote = quotes[randomIndex];
@@ -44,13 +73,9 @@ function saveQuotes() {
 
 function exportToJsonFile() {
     const dataString = JSON.stringify(quotes);
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataString);
-    const exportFileDefaultName = 'quotes.json';
     const dataBlob = new Blob([dataString], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.setAttribute('href', url);
     linkElement.setAttribute('download', 'quotes.json');
     document.body.appendChild(linkElement);
@@ -61,47 +86,52 @@ function exportToJsonFile() {
 function importFromJsonFile(event) {
     const fileReader = new FileReader();
     fileReader.onload = function(event) {
-        const importedQuotes = JSON.parse(event.target.result);
-        quotes.push(...importedQuotes);
-        saveQuotes();
-        alert('Quotes imported successfully!');
-    };
-    fileReader.readAsText(event.target.files[0]);
-}
-async function syncWithServer() {
-    try {
-        const response = await fetch('https://jsonplaceholder.typicode.com/posts');
-        const serverQuotes = await response.json();
-        quotes = serverQuotes;
-        saveQuotes();
-        showNotification('Quotes synced with server');
-    } catch (error) {
-        console.error('Error syncing with server:', error);
+        fileReader.onload = function(event) {
+            const importedQuotes = JSON.parse(event.target.result);
+            quotes.push(...importedQuotes);
+            saveQuotes();
+            alert('Quotes imported successfully!');
+        };
+        fileReader.readAsText(event.target.files[0]);
     }
-}
+    async function syncWithServer() {
+        try {
+            const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+            const serverQuotes = await response.json();
+            quotes = serverQuotes;
+            saveQuotes();
+            showNotification('Quotes synced with server');
+        } catch (error) {
+            console.error('Error syncing with server:', error);
+        }
+    }
 
-function startPeriodicSync() {
-    setInterval(syncWithServer, 60000);
-}
+    function startPeriodicSync() {
+        setInterval(syncWithServer, 60000);
+    }
 
-function showNotification(message) {
-    const notification = document.createElement('div');
-    notification.textContent = message;
-    notification.className = 'notification';
-    document.body.appendChild(notification);
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
-showQuoteButton.addEventListener("click", showRandomQuote);
-createAddQuoteForm();
-const exportButton = document.getElementById("exportQuotes");
-exportButton.onclick = exportToJsonFile;
-document.body.appendChild(exportButton);
-const importInput = document.createElement('input');
-importInput.type = 'file';
-importInput.id = 'importFile';
-importInput.accept = '.json';
-importInput.onchange = importFromJsonFile;
-document.body.appendChild(importInput);
-startPeriodicSync();
+    function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.textContent = message;
+        notification.className = 'notification';
+        document.body.appendChild(notification);
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+    showQuoteButton.addEventListener("click", showRandomQuote);
+    createAddQuoteForm();
+    const exportButton = document.getElementById("exportQuotes");
+    exportButton.onclick = exportToJsonFile;
+    document.body.appendChild(exportButton);
+    const importInput = document.createElement('input');
+    importInput.type = 'file';
+    importInput.id = 'importFile';
+    importInput.accept = '.json';
+    importInput.onchange = importFromJsonFile;
+    document.body.appendChild(importInput);
+
+
+    startPeriodicSync();
+    startPeriodicSync();
+    populateCategories()
